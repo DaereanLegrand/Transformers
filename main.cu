@@ -2,11 +2,14 @@
 #include <vector>
 #include "InputEmbeddings.h"
 #include "PositionalEncoding.h"
+#include "LayerNormalization.h"
 
 using std::cout;
 using std::endl;
 
-void printGPUInfo() {
+void 
+printGPUInfo() 
+{
     int deviceCount = 0;
     cudaError_t error_id = cudaGetDeviceCount(&deviceCount);
 
@@ -36,7 +39,9 @@ void printGPUInfo() {
     }
 }
 
-void printTensor(const float* tensor, int batch_size, int seq_len, int d_model) {
+void
+printTensor(const float* tensor, int batch_size, int seq_len, int d_model) 
+{
     for (int b = 0; b < batch_size; ++b) {
         std::cout << "Batch " << b << ":" << std::endl;
         for (int s = 0; s < seq_len; ++s) {
@@ -69,6 +74,7 @@ main()
 
     InputEmbeddings embeddings(d_model, vocab_size);
     PositionalEncoding positional_encoding(d_model, seq_len, dropout);
+    LayerNormalization layer_norm(d_model);
 
     std::vector<int> input = {1, 2, 3, 4, 5, 6};
 
@@ -77,6 +83,7 @@ main()
 
     embeddings.forward(input.data(), d_output, batch_size, seq_len);
     positional_encoding.forward(d_output, batch_size, seq_len);
+    layer_norm.forward(d_output, batch_size, seq_len);
 
     std::vector<float> output(batch_size * seq_len * d_model);
     checkCudaErrors(cudaMemcpy(output.data(), d_output, output.size() * sizeof(float), cudaMemcpyDeviceToHost));
