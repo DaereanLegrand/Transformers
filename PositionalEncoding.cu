@@ -5,7 +5,9 @@
 #include <cuda_runtime.h>
 #include <thrust/device_vector.h>
 
-__global__ void initializePositionalEncodingKernel(float* pe, int d_model, int seq_len) {
+__global__ void 
+initializePositionalEncodingKernel(float* pe, int d_model, int seq_len) 
+{
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < seq_len * d_model) {
         int position = idx / d_model;
@@ -20,7 +22,9 @@ __global__ void initializePositionalEncodingKernel(float* pe, int d_model, int s
     }
 }
 
-__global__ void dropoutKernel(float* x, float* random_values, int size, float dropout) {
+__global__ void 
+dropoutKernel(float* x, float* random_values, int size, float dropout) 
+{
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < size) {
         if (random_values[idx] < dropout) {
@@ -29,7 +33,9 @@ __global__ void dropoutKernel(float* x, float* random_values, int size, float dr
     }
 }
 
-__global__ void addPositionalEncodingKernel(float* x, const float* pe, int size) {
+__global__ void 
+addPositionalEncodingKernel(float* x, const float* pe, int size) 
+{
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < size) {
         x[idx] += pe[idx];
@@ -37,7 +43,8 @@ __global__ void addPositionalEncodingKernel(float* x, const float* pe, int size)
 }
 
 PositionalEncoding::PositionalEncoding(int d_model, int seq_len, float dropout)
-    : d_model(d_model), seq_len(seq_len), dropout(dropout) {
+    : d_model(d_model), seq_len(seq_len), dropout(dropout) 
+{
     checkCudaErrors(cudaMalloc(&pe, seq_len * d_model * sizeof(float)));
     
     int blockSize = 256;
@@ -49,12 +56,15 @@ PositionalEncoding::PositionalEncoding(int d_model, int seq_len, float dropout)
     curandSetPseudoRandomGeneratorSeed(curand_gen, 1234ULL);
 }
 
-PositionalEncoding::~PositionalEncoding() {
+PositionalEncoding::~PositionalEncoding() 
+{
     checkCudaErrors(cudaFree(pe));
     curandDestroyGenerator(curand_gen);
 }
 
-void PositionalEncoding::applyDropout(float* x, int size) {
+void
+PositionalEncoding::applyDropout(float* x, int size) 
+{
     thrust::device_vector<float> random_values(size);
     curandGenerateUniform(curand_gen, thrust::raw_pointer_cast(random_values.data()), size);
 
@@ -66,7 +76,9 @@ void PositionalEncoding::applyDropout(float* x, int size) {
     checkCudaErrors(cudaDeviceSynchronize());
 }
 
-void PositionalEncoding::forward(float* x, int batch_size, int seq_len) {
+void 
+PositionalEncoding::forward(float* x, int batch_size, int seq_len) 
+{
     int size = batch_size * seq_len * d_model;
 
     // Copy of pe for PositionalEncoding 

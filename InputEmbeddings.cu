@@ -5,7 +5,9 @@
 #include <curand.h>
 #include <curand_kernel.h>
 
-__global__ void initializeEmbeddingMatrix(float* embedding_matrix, int vocab_size, int d_model, unsigned long seed) {
+__global__ void
+initializeEmbeddingMatrix(float* embedding_matrix, int vocab_size, int d_model, unsigned long seed) 
+{
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < vocab_size * d_model) {
         curandState state;
@@ -15,7 +17,8 @@ __global__ void initializeEmbeddingMatrix(float* embedding_matrix, int vocab_siz
 }
 
 InputEmbeddings::InputEmbeddings(int d_model, int vocab_size)
-    : d_model(d_model), vocab_size(vocab_size) {
+    : d_model(d_model), vocab_size(vocab_size) 
+{
     // Allocate memory 
     checkCudaErrors(cudaMalloc(&embedding_matrix, vocab_size * d_model * sizeof(float)));
 
@@ -29,7 +32,8 @@ InputEmbeddings::InputEmbeddings(int d_model, int vocab_size)
     checkCublasErrors(cublasCreate(&cublas_handle));
 }
 
-InputEmbeddings::~InputEmbeddings() {
+InputEmbeddings::~InputEmbeddings() 
+{
     // Free the embedding matrix
     checkCudaErrors(cudaFree(embedding_matrix));
 
@@ -37,7 +41,9 @@ InputEmbeddings::~InputEmbeddings() {
     checkCublasErrors(cublasDestroy(cublas_handle));
 }
 
-void InputEmbeddings::forward(const int* input, float* output, int batch_size, int seq_len) {
+void 
+InputEmbeddings::forward(const int* input, float* output, int batch_size, int seq_len) 
+{
     // Scale factor
     float scale = std::sqrt(d_model);
 
