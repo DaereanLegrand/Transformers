@@ -18,3 +18,16 @@ checkCublasErrors(cublasStatus_t status)
         exit(status);
     }
 }
+
+__global__ void 
+dropoutKernel(float* x, float* random_values, int size, float dropout) 
+{
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx < size) {
+        if (random_values[idx] < dropout) {
+            x[idx] = 0.0f;
+        }
+    }
+}
+
+

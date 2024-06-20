@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include "FeedForwardBlock.h"
 #include "InputEmbeddings.h"
 #include "PositionalEncoding.h"
 #include "LayerNormalization.h"
@@ -62,7 +63,9 @@ main()
 
     // Parameters
     // Multihead 
-    int d_model = 4;
+    int d_model = 4; // in paper 512
+    // FeedFoward inner layer dimensionality
+    int d_ff = 16; // in paper 2048
     // Size of dict
     int vocab_size = 10;
     // input will have...
@@ -75,6 +78,7 @@ main()
     InputEmbeddings embeddings(d_model, vocab_size);
     PositionalEncoding positional_encoding(d_model, seq_len, dropout);
     LayerNormalization layer_norm(d_model);
+    FeedForwardBlock feedForwardBlock(d_model, d_ff, dropout);
 
     std::vector<int> input = {1, 2, 3, 4, 5, 6};
 
