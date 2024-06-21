@@ -5,17 +5,6 @@
 #include <thrust/device_vector.h>
 
 __global__ void
-initializeWeightsKernel(float* weights, int size, unsigned long seed) 
-{
-    int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if (idx < size) {
-        curandState state;
-        curand_init(seed, idx, 0, &state);
-        weights[idx] = curand_uniform(&state) * 0.02f - 0.01f;
-    }
-}
-
-__global__ void
 computeGradientsKernel(float* grad_output, float* grad_w1, float* grad_b1, float* grad_w2, float* grad_b2, float* input, int d_model, int d_ff, int batch_size, int seq_len) 
 {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -69,16 +58,6 @@ computeGradientsKernel(float* grad_output, float* grad_w1, float* grad_b1, float
             }
             grad_w1[i] = grad_w1_sum / (batch_size * seq_len);
         }
-    }
-}
-
-
-__global__ void 
-updateParametersKernel(float* param, float* grad_param, float learning_rate, int size) 
-{
-    int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if (idx < size) {
-        param[idx] -= learning_rate * grad_param[idx];
     }
 }
 

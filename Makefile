@@ -5,7 +5,7 @@ CUDA_LIBS = -lcudart -lcublas -lcurand
 # Project files (modify to match your project structure)
 TARGET = transformers
 CUDA_MAIN = main.cu
-CUDA_SOURCES = FeedForwardBlock.cu InputEmbeddings.cu LayerNormalization.cu PositionalEncoding.cu Utilities.cu
+CUDA_SOURCES = FeedForwardBlock.cu InputEmbeddings.cu LayerNormalization.cu MultiHeadAttentionBlock.cu PositionalEncoding.cu Utilities.cu
 OBJECTS = $(CUDA_SOURCES:.cu=.o)
 
 # Default target
