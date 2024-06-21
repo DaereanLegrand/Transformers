@@ -80,45 +80,47 @@ main()
     // h meaning heads
     int h = 4;
 
-    InputEmbeddings embeddings(d_model, vocab_size);
-    PositionalEncoding positional_encoding(d_model, seq_len, dropout);
-    LayerNormalization layer_norm(d_model);
-    FeedForwardBlock feedForwardBlock(d_model, d_ff, dropout);
-    MultiHeadAttentionBlock multiHeadAttentionBlock(d_model, h, dropout);
-
     std::vector<int> input = {1, 2, 3, 4, 5, 6};
-
     float* d_output;   
     checkCudaErrors(cudaMalloc(&d_output, batch_size * seq_len * d_model * sizeof(float)));
 
-    printf("Creating Embeddings: \n");
+    InputEmbeddings embeddings(d_model, vocab_size);
+    PositionalEncoding positional_encoding(d_model, seq_len, dropout);
+
+    printf("Creating Embeddings \n");
     embeddings.forward(input.data(), d_output, batch_size, seq_len);
-    printf("Postional Encoding: \n");
+    printf("Postional Encoding \n");
     positional_encoding.forward(d_output, batch_size, seq_len);
 
+    LayerNormalization layer_norm_mha(d_model);
+    MultiHeadAttentionBlock multiHeadAttentionBlock(d_model, h, dropout);
+    LayerNormalization layer_norm_ff(d_model);
+    FeedForwardBlock feedForwardBlock(d_model, d_ff, dropout);
+
     printf("Creation of Q, K, V matrices: \n");
-    std::vector<float> output(batch_size * seq_len * d_model);
-    checkCudaErrors(cudaMemcpy(output.data(), d_output, output.size() * sizeof(float), cudaMemcpyDeviceToHost));
 
+    int size = batch_size * seq_len * d_model;
     float *q, *k, *v;
-    checkCudaErrors(cudaMalloc(&q, batch_size * seq_len * d_model * sizeof(float)));
-    checkCudaErrors(cudaMalloc(&k, batch_size * seq_len * d_model * sizeof(float)));
-    checkCudaErrors(cudaMalloc(&v, batch_size * seq_len * d_model * sizeof(float)));
+    checkCudaErrors(cudaMalloc(&q, size * sizeof(float)));
+    checkCudaErrors(cudaMalloc(&k, size * sizeof(float)));
+    checkCudaErrors(cudaMalloc(&v, size * sizeof(float)));
 
-    checkCudaErrors(cudaMemcpy(q, output.data(), output.size() * sizeof(float), cudaMemcpyHostToDevice));
-    checkCudaErrors(cudaMemcpy(k, output.data(), output.size() * sizeof(float), cudaMemcpyHostToDevice));
-    checkCudaErrors(cudaMemcpy(v, output.data(), output.size() * sizeof(float), cudaMemcpyHostToDevice));
+    checkCudaErrors(cudaMemcpy(q, d_output, size * sizeof(float), cudaMemcpyHostToDevice));
+    checkCudaErrors(cudaMemcpy(k, d_output, size * sizeof(float), cudaMemcpyHostToDevice));
+    checkCudaErrors(cudaMemcpy(v, d_output, size * sizeof(float), cudaMemcpyHostToDevice));
 
+    printf("Layer Normalization: \n");
+    layer_norm_mha.forward(d_output, batch_size, seq_len);
     printf("MultiHead Attention Block: \n");
     multiHeadAttentionBlock.forward(q, k, v, nullptr, d_output, batch_size, seq_len);
+
     printf("Layer Normalization: \n");
-    layer_norm.forward(d_output, batch_size, seq_len);
+    layer_norm_ff.forward(d_output, batch_size, seq_len);
     printf("Feed Forward: \n");
     feedForwardBlock.forward(d_output, d_output, batch_size, seq_len);
 
+    std::vector<float> output(batch_size * seq_len * d_model);
     checkCudaErrors(cudaMemcpy(output.data(), d_output, output.size() * sizeof(float), cudaMemcpyDeviceToHost));
-
     printTensor(output.data(), batch_size, seq_len, d_model);
-
     return 0;
 }
