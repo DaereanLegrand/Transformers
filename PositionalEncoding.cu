@@ -57,7 +57,6 @@ PositionalEncoding::applyDropout(float* x, int size)
     thrust::device_vector<float> random_values(size);
     curandGenerateUniform(curand_gen, thrust::raw_pointer_cast(random_values.data()), size);
 
-    // Apply dropout 
     float* d_random_values = thrust::raw_pointer_cast(random_values.data());
     int blockSize = 256;
     int numBlocks = (size + blockSize - 1) / blockSize;
@@ -70,7 +69,6 @@ PositionalEncoding::forward(float* x, int batch_size, int seq_len)
 {
     int size = batch_size * seq_len * d_model;
 
-    // Copy of pe for PositionalEncoding 
     thrust::device_vector<float> pos_enc(size);
     for (int b = 0; b < batch_size; ++b) {
         checkCudaErrors(cudaMemcpy(thrust::raw_pointer_cast(pos_enc.data()) + b * seq_len * d_model,
@@ -78,7 +76,6 @@ PositionalEncoding::forward(float* x, int batch_size, int seq_len)
                                    cudaMemcpyDeviceToDevice));
     }
 
-    // Apply dropout (random values will get zeroed)
     applyDropout(thrust::raw_pointer_cast(pos_enc.data()), size);
     
     // Adding Pos enc to original data

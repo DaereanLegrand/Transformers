@@ -141,20 +141,16 @@ FeedForwardBlock::forward(float* input, float* output, int batch_size, int seq_l
     float alpha = 1.0f;
     float beta = 0.0f;
 
-    // First linear transformation (input -> d_ff)
     checkCublasErrors(cublasSgemm(cublas_handle, CUBLAS_OP_N, CUBLAS_OP_N, d_ff, batch_size * seq_len, d_model, &alpha, w1, d_ff, input, d_model, &beta, output, d_ff));
 
-    // Apply ReLU activation
     int total_elements = batch_size * seq_len * d_ff;
     int blockSize = 256;
     int numBlocks = (total_elements + blockSize - 1) / blockSize;
     relu<<<numBlocks, blockSize>>>(output, total_elements);
     checkCudaErrors(cudaDeviceSynchronize());
 
-    // Apply Dropout (random values will get zeroed)
     applyDropout(output, total_elements);
 
-    // Second linear transformation (d_ff -> d_model)
     checkCublasErrors(cublasSgemm(cublas_handle, CUBLAS_OP_N, CUBLAS_OP_N, d_model, batch_size * seq_len, d_ff, &alpha, w2, d_model, output, d_ff, &beta, output, d_model));
 }
 
@@ -165,7 +161,6 @@ FeedForwardBlock::backward(float* grad_output, float* input, int batch_size, int
     int blockSize = 256;
     int numBlocks = (total_elements + blockSize - 1) / blockSize;
 
-    // Compute gradients for w1, b1, w2, b2
     computeGradientsKernel<<<numBlocks, blockSize>>>(grad_output, grad_w1, grad_b1, grad_w2, grad_b2, input, d_model, d_ff, batch_size, seq_len);
     checkCudaErrors(cudaDeviceSynchronize());
 }
